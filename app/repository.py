@@ -1,18 +1,33 @@
 from typing import List
+from sqlalchemy.orm import Session
 from app.schemas import SecurityEvent, SecurityEventIn
+from app.models import SecurityEventDB
 
 class EventRepository:
-    def __init__(self) -> None:
-        self._events: List[SecurityEvent] = []
-        self._next_id = 1
+    def add(self, db: Session, e: SecurityEventIn) -> SecurityEvent:
+        row = SecurityEventDB(**e.model_dump())
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return SecurityEvent(
+            id=row.id,
+            event_type=row.event_type,
+            source_ip=row.source_ip,
+            user_id=row.user_id,
+            details=row.details,
+        )
 
-    def add(self, e: SecurityEventIn) -> SecurityEvent:
-        event = SecurityEvent(id=self._next_id, **e.model_dump())
-        self._next_id += 1
-        self._events.append(event)
-        return event
-
-    def list(self) -> List[SecurityEvent]:
-        return list(self._events)
+    def list(self, db: Session) -> List[SecurityEvent]:
+        rows = db.query(SecurityEventDB).order_by(SecurityEventDB.id.desc()).all()
+        return [
+            SecurityEvent(
+                id=r.id,
+                event_type=r.event_type,
+                source_ip=r.source_ip,
+                user_id=r.user_id,
+                details=r.details,
+            )
+            for r in rows
+        ]
 
 repo = EventRepository()

@@ -1,14 +1,36 @@
 services:
   api:
-    build: .
-    image: teamsystem-security-backend-api:latest
+    build:
+      context: .
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=local
+      - ENVIRONMENT=docker
+      - DATABASE_URL=postgresql+psycopg2://app:app@db:5432/securitydb
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read())\""]
       interval: 10s
       timeout: 3s
       retries: 5
-    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=securitydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d securitydb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
