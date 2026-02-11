@@ -1,20 +1,13 @@
 from fastapi import APIRouter, Depends
 from typing import List
 from sqlalchemy.orm import Session
-
+from app.db import get_db
 from app.schemas import SecurityEvent, SecurityEventIn, HealthOut
 from app.repository import repo
 from app.config import settings
 from app.db import SessionLocal
 
 router = APIRouter()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/health", response_model=HealthOut)
 def health() -> HealthOut:

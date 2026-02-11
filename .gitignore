@@ -13,3 +13,6 @@ venv/
 
 # env files
 .env
+test.db
+.pytest_cache/
+
